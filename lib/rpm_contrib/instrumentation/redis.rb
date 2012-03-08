@@ -34,6 +34,23 @@ DependencyDetection.defer do
       alias_method :raw_call_command_without_newrelic_trace, redis_call_method
       alias_method redis_call_method, :raw_call_command_with_newrelic_trace
 
+      if public_method_defined? :call_pipelined
+        def call_pipelined_with_newrelic_trace(commands, options={})
+
+          method_name = commands.map { |c| (c.kind_of?(Array) ? c[0] : c).to_s }.join("-")
+
+          metrics = ["Database/Redis/#{method_name}",
+                     (NewRelic::Agent::Instrumentation::MetricFrame.recording_web_transaction? ? 'Database/Redis/allWeb' : 'Database/Redis/allOther')]
+          self.class.trace_execution_scoped(metrics) do
+            # NewRelic::Control.instance.log.debug("Instrumenting Redis Call[#{method_name}]: #{args[0].inspect}")
+            call_pipelined_without_newrelic_trace(*args)
+          end
+        end
+
+
+        alias_method :call_pipelined_without_newrelic_trace, :call_pipelined
+        alias_method :call_pipelined, :call_pipelined_with_newrelic_trace
+      end
     end
   end
 end
