@@ -43,7 +43,7 @@ DependencyDetection.defer do
                      (NewRelic::Agent::Instrumentation::MetricFrame.recording_web_transaction? ? 'Database/Redis/allWeb' : 'Database/Redis/allOther')]
           self.class.trace_execution_scoped(metrics) do
             # NewRelic::Control.instance.log.debug("Instrumenting Redis Call[#{method_name}]: #{args[0].inspect}")
-            call_pipelined_without_newrelic_trace(*args)
+            call_pipelined_without_newrelic_trace commands, options
           end
         end
 
